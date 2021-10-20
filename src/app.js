@@ -1,13 +1,21 @@
 import express from 'express';
 import connection from './database/database.js';
+import { validateSignin } from './validation/signUp.js';
 
 const app = express();
 app.use(express.json());
 
-app.get('/', async (req, res) => {
-    const users = (await connection.query(`SELECT * FROM users;`)).rows;
+app.post('/sign-up', async (req, res) => {
+    const { name, email, password, repeatPassword } = req.body;
 
-    res.send(users);
+    const validation = validateSignin.validate({
+        name,
+        email,
+        password,
+        repeatPassword,
+    });
+
+    res.send(validation);
 });
 
 app.listen(4000);
