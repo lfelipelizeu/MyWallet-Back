@@ -22,6 +22,34 @@ async function createNewTransaction (req, res) {
     }
 }
 
+async function listUserTransactions (req, res) {
+    const token = req.headers['authorization']?.replace('Bearer ', '');
+
+    if (!token) return res.sendStatus(401);
+
+    try {
+        const result = await connection.query(`SELECT * FROM sessions WHERE token = $1`, [token]);
+        const session = result.rows[0];
+
+        if (!session) return res.sendStatus(401);
+
+        const transactionsResult = await connection.query(`
+            SELECT 
+                description, 
+                value, 
+                type,
+                date 
+            FROM transactions 
+                WHERE "userId" = $1;`, [session.userId]);
+        const transactions = transactionsResult.rows;
+
+        res.status(200).send(transactions);
+    } catch {
+        res.sendStatus(500);
+    }
+}
+
 export {
     createNewTransaction,
+    listUserTransactions,
 }
