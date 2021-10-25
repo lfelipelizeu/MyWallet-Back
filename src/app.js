@@ -17,4 +17,4 @@ app.get('/transactions', listUserTransactions);
 
 app.get('/health', (req, res) => res.status(200).send('Server is healty'));
 
-app.listen(4000);
+export default app;
