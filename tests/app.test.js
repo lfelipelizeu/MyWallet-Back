@@ -96,10 +96,10 @@ describe('POST /sign-in', () => {
 });
 
 describe('POST /transactions', () => {
-    const user = createUser();
     let session;
 
     beforeAll(async () => {
+        const user = createUser();
         const hashPassword = bcrypt.hashSync(user.password, 10);
         const insertedUser = await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;', [user.name, user.email, hashPassword]);
         user.id = insertedUser.rows[0].id;
@@ -147,6 +147,41 @@ describe('POST /transactions', () => {
 
         const result = await supertest(app).post('/transactions').send(body).set('authorization', session.token);
         expect(result.status).toEqual(201);
+    });
+});
+
+describe('GET /transactions', () => {
+    let session;
+
+    beforeAll(async () => {
+        const user = createUser();
+        const hashPassword = bcrypt.hashSync(user.password, 10);
+        const insertedUser = await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;', [user.name, user.email, hashPassword]);
+        user.id = insertedUser.rows[0].id;
+
+        const newSession = await connection.query('INSERT INTO sessions (user_id, token) VALUES ($1, $2) RETURNING *;', [user.id, uuid()]);
+        // eslint-disable-next-line prefer-destructuring
+        session = newSession.rows[0];
+    });
+
+    afterAll(async () => {
+        await connection.query('DELETE FROM sessions;');
+        await connection.query('DELETE FROM users;');
+    });
+
+    it('returns 401 for no token received', async () => {
+        const result = await supertest(app).get('/transactions');
+        expect(result.status).toEqual(401);
+    });
+
+    it('returns 401 for invalid session', async () => {
+        const result = await supertest(app).get('/transactions').set('authorization', faker.datatype.uuid());
+        expect(result.status).toEqual(401);
+    });
+
+    it('returns 200 for a valid session', async () => {
+        const result = await supertest(app).get('/transactions').set('authorization', session.token);
+        expect(result.status).toEqual(200);
     });
 });
 

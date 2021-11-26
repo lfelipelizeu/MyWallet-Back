@@ -41,11 +41,12 @@ async function listUserTransactions(req, res) {
                 type,
                 date 
             FROM transactions 
-                WHERE "userId" = $1;`, [session.userId]);
+                WHERE user_id = $1;`, [session.userId]);
         const transactions = transactionsResult.rows;
 
         return res.status(200).send(transactions);
-    } catch {
+    } catch (error) {
+        console.error(error);
         return res.sendStatus(500);
     }
 }
