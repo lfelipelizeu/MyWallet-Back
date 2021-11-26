@@ -1,10 +1,10 @@
 import joi from 'joi';
 
-function isTransactionDataValid (object) {
+function isTransactionDataValid(object) {
     const transactionSchema = joi.object({
         description: joi.string().min(1).required(),
         value: joi.number().positive().precision(2).required(),
-        type: joi.string().required()
+        type: joi.string().required(),
     });
 
     const { error } = transactionSchema.validate(object, { convert: false });
@@ -12,6 +12,4 @@ function isTransactionDataValid (object) {
     return !joi.isError(error);
 }
 
-export {
-    isTransactionDataValid,
-}
+export default isTransactionDataValid;
