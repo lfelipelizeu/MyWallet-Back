@@ -1,3 +1,4 @@
+import '../src/setup.js';
 import connection from '../src/database/database.js';
 import supertest from 'supertest';
 import app from '../src/app.js';
