@@ -2,9 +2,11 @@ import '../src/setup.js';
 import supertest from 'supertest';
 import bcrypt from 'bcrypt';
 import faker from 'faker';
+import { v4 as uuid } from 'uuid';
 import connection from '../src/database/database.js';
 import app from '../src/app.js';
 import createUser from './factories/userFactory.js';
+import createTransaction from './factories/transactionFactory.js';
 
 describe('POST /signup', () => {
     const user = createUser();
@@ -90,6 +92,61 @@ describe('POST /sign-in', () => {
 
         const result = await supertest(app).post('/sign-in').send(body);
         expect(result.status).toEqual(200);
+    });
+});
+
+describe('POST /transactions', () => {
+    const user = createUser();
+    let session;
+
+    beforeAll(async () => {
+        const hashPassword = bcrypt.hashSync(user.password, 10);
+        const insertedUser = await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;', [user.name, user.email, hashPassword]);
+        user.id = insertedUser.rows[0].id;
+
+        const newSession = await connection.query('INSERT INTO sessions (user_id, token) VALUES ($1, $2) RETURNING *;', [user.id, uuid()]);
+        // eslint-disable-next-line prefer-destructuring
+        session = newSession.rows[0];
+    });
+
+    afterAll(async () => {
+        await connection.query('DELETE FROM transactions;');
+        await connection.query('DELETE FROM sessions;');
+        await connection.query('DELETE FROM users;');
+    });
+
+    it('returns 401 for no token received', async () => {
+        const body = createTransaction();
+
+        const result = await supertest(app).post('/transactions').send(body);
+        expect(result.status).toEqual(401);
+    });
+
+    it('returns 422 for invalid body', async () => {
+        const newTransaction = createTransaction();
+
+        const body = {
+            description: newTransaction.description,
+            type: newTransaction.type,
+            date: newTransaction.date,
+        };
+
+        const result = await supertest(app).post('/transactions').send(body).set('authorization', session.token);
+        expect(result.status).toEqual(422);
+    });
+
+    it('returns 401 for invalid session', async () => {
+        const body = createTransaction();
+
+        const result = await supertest(app).post('/transactions').send(body).set('authorization', faker.datatype.uuid());
+        expect(result.status).toEqual(401);
+    });
+
+    it('returns 201 for valid data', async () => {
+        const body = createTransaction();
+
+        const result = await supertest(app).post('/transactions').send(body).set('authorization', session.token);
+        expect(result.status).toEqual(201);
     });
 });
 

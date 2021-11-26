@@ -10,14 +10,15 @@ async function createNewTransaction(req, res) {
     if (!isTransactionDataValid(req.body) || !(type === 'income' || type === 'outcome')) return res.sendStatus(422);
 
     try {
-        const result = await connection.query('SELECT * FROM sessions WHERE token = $1 LIMIT 1;', [token]);
+        const result = await connection.query('SELECT *, user_id as "userId" FROM sessions WHERE token = $1 LIMIT 1;', [token]);
         const session = result.rows[0];
 
         if (!session) return res.sendStatus(401);
 
-        await connection.query('INSERT INTO transactions ("userId", description, value, type, date) VALUES ($1, $2, $3, $4, $5);', [session.userId, description.trim(), value.toLocaleString('pt-BR'), type, dayjs()]);
+        await connection.query('INSERT INTO transactions (user_id, description, value, type, date) VALUES ($1, $2, $3, $4, $5);', [session.userId, description.trim(), value, type, dayjs()]);
         return res.sendStatus(201);
-    } catch {
+    } catch (error) {
+        console.error(error);
         return res.sendStatus(500);
     }
 }
