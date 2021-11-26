@@ -16,7 +16,8 @@ async function signUpNewUser(req, res) {
         await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3);', [name, email, password]);
 
         return res.sendStatus(201);
-    } catch {
+    } catch (error) {
+        console.error(error);
         return res.sendStatus(500);
     }
 }
@@ -33,19 +34,20 @@ async function signInUser(req, res) {
         if (!user) return res.sendStatus(404);
         if (!bcrypt.compareSync(password, user.password)) return res.sendStatus(401);
 
-        const session = await connection.query('SELECT * FROM sessions WHERE "userId" = $1 LIMIT 1;', [user.id]);
+        const session = await connection.query('SELECT * FROM sessions WHERE user_id = $1 LIMIT 1;', [user.id]);
 
         if (session.rowCount !== 0) {
             return res.status(200).send({ name: user.name, token: session.rows[0].token });
         }
 
         const token = uuid();
-        await connection.query('INSERT INTO sessions ("userId", token) VALUES ($1, $2);', [user.id, token]);
+        await connection.query('INSERT INTO sessions (user_id, token) VALUES ($1, $2);', [user.id, token]);
         return res.status(200).send({
             name: user.name,
             token,
         });
-    } catch {
+    } catch (error) {
+        console.error(error);
         return res.sendStatus(500);
     }
 }

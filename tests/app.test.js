@@ -1,17 +1,17 @@
 import '../src/setup.js';
 import supertest from 'supertest';
+import bcrypt from 'bcrypt';
+import faker from 'faker';
 import connection from '../src/database/database.js';
 import app from '../src/app.js';
 import createUser from './factories/userFactory.js';
-import bcrypt from 'bcrypt';
 
 describe('POST /signup', () => {
     const user = createUser();
 
     beforeAll(async () => {
         const hashPassword = bcrypt.hashSync(user.password, 10);
-        const insertedUser = await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;', [user.name, user.email, hashPassword]);
-        user.id = insertedUser.rows[0].id;
+        await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;', [user.name, user.email, hashPassword]);
     });
 
     afterAll(async () => {
@@ -32,12 +32,7 @@ describe('POST /signup', () => {
     });
 
     it('returns 409 for email already registered', async () => {
-        const body = {
-            name: user.name,
-            email: user.email,
-            password: user.password,
-            repeatPassword: user.repeatPassword,
-        };
+        const body = user;
 
         const result = await supertest(app).post('/sign-up').send(body);
         expect(result.status).toEqual(409);
@@ -48,6 +43,53 @@ describe('POST /signup', () => {
 
         const result = await supertest(app).post('/sign-up').send(body);
         expect(result.status).toEqual(201);
+    });
+});
+
+describe('POST /sign-in', () => {
+    const user = createUser();
+
+    beforeAll(async () => {
+        const hashPassword = bcrypt.hashSync(user.password, 10);
+        await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;', [user.name, user.email, hashPassword]);
+    });
+
+    afterAll(async () => {
+        await connection.query('DELETE FROM sessions;');
+        await connection.query('DELETE FROM users;');
+    });
+
+    it('returns 400 for invalid body', async () => {
+        const body = {
+            email: user.email,
+        };
+
+        const result = await supertest(app).post('/sign-in').send(body);
+        expect(result.status).toEqual(400);
+    });
+
+    it('returns 404 for not registered user', async () => {
+        const body = createUser();
+
+        const result = await supertest(app).post('/sign-in').send(body);
+        expect(result.status).toEqual(404);
+    });
+
+    it('returns 401 for wrong password', async () => {
+        const body = {
+            email: user.email,
+            password: faker.internet.password(),
+        };
+
+        const result = await supertest(app).post('/sign-in').send(body);
+        expect(result.status).toEqual(401);
+    });
+
+    it('returns 200 for wrong password', async () => {
+        const body = user;
+
+        const result = await supertest(app).post('/sign-in').send(body);
+        expect(result.status).toEqual(200);
     });
 });
 
