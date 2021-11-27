@@ -13,7 +13,22 @@ async function createTransaction(session, body) {
     await connection.query('INSERT INTO transactions (user_id, description, value, type, date) VALUES ($1, $2, $3, $4, $5);', [session.userId, description.trim(), value, type, dayjs()]);
 }
 
+async function searchTransactions(userId) {
+    const result = await connection.query(`
+            SELECT 
+                description, 
+                value, 
+                type,
+                date 
+            FROM transactions 
+                WHERE user_id = $1;`, [userId]);
+    const transactions = result.rows;
+
+    return transactions;
+}
+
 export {
     searchSession,
     createTransaction,
+    searchTransactions,
 };
