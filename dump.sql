@@ -1,15 +1,41 @@
-CREATE DATABASE mywallet;
+CREATE TABLE "users" (
+	"id" serial NOT NULL,
+	"name" TEXT NOT NULL,
+	"email" TEXT NOT NULL UNIQUE,
+	"password" TEXT NOT NULL,
+	CONSTRAINT "users_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
 
-CREATE TABLE users (id SERIAL, name TEXT, email TEXT, password TEXT);
 
-CREATE TABLE sessions (id SERIAL, "userId" INTEGER, token UUID);
 
-CREATE TABLE transactions (id SERIAL, "userId" INTEGER, description TEXT, value MONEY, type TEXT, date DATE);
+CREATE TABLE "sessions" (
+	"id" serial NOT NULL,
+	"user_id" integer NOT NULL,
+	"token" TEXT NOT NULL UNIQUE,
+	CONSTRAINT "sessions_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
 
-INSERT INTO sessions ("userId", token) VALUES (1, 'cc0e39a2-678d-415a-86fd-e37d469ebc2c');
 
-INSERT INTO users (name, email, password) VALUES ('Luis Felipe senha 12345', 'luis@email.com', '$2b$10$zgTu5WtW79kENSkhLADvu.dGam2XjQJ0j.ajW.5UTp8Wr.OFNt3lG');
 
-INSERT INTO transactions ("userId", description, value, type, date) VALUES (1, 'Recebimento', 300.5, 'income', '2021-10-25');
+CREATE TABLE "transactions" (
+	"id" serial NOT NULL,
+	"user_id" integer NOT NULL,
+	"description" varchar(30) NOT NULL,
+	"value" numeric NOT NULL,
+	"type" TEXT NOT NULL,
+	"date" DATE NOT NULL,
+	CONSTRAINT "transactions_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
 
-INSERT INTO transactions ("userId", description, value, type, date) VALUES (1, 'Pagamento', 100, 'outcome', '2021-10-26');
+
+
+
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_fk0" FOREIGN KEY ("user_id") REFERENCES "users"("id");
+
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_fk0" FOREIGN KEY ("user_id") REFERENCES "users"("id");
