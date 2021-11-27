@@ -26,20 +26,16 @@ async function signInUser(req, res) {
     if (!email || !password) return res.sendStatus(400);
 
     try {
-        const result = await connection.query('SELECT * FROM users WHERE email = $1 LIMIT 1;', [email.trim()]);
-        const user = result.rows[0];
-
+        const user = await userRepository.searchEmail(email);
         if (!user) return res.sendStatus(404);
-        if (!bcrypt.compareSync(password, user.password)) return res.sendStatus(401);
 
-        const session = await connection.query('SELECT * FROM sessions WHERE user_id = $1 LIMIT 1;', [user.id]);
+        if (!userService.isPasswordValid(password, user.password)) return res.sendStatus(401);
 
-        if (session.rowCount !== 0) {
-            return res.status(200).send({ name: user.name, token: session.rows[0].token });
-        }
+        const session = await userRepository.searchExistingSession(user.id);
+        if (session) return res.status(200).send({ name: user.name, token: session.token });
 
-        const token = uuid();
-        await connection.query('INSERT INTO sessions (user_id, token) VALUES ($1, $2);', [user.id, token]);
+        const token = await userService.createNewSession(user.id);
+
         return res.status(200).send({
             name: user.name,
             token,
