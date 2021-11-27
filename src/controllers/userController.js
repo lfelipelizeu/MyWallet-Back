@@ -1,19 +1,17 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
 import connection from '../database/database.js';
-import isSignUpDataValid from '../validation/signUp.js';
+import * as userService from '../services/userService.js';
+import * as userRepository from '../repositories/userRepository.js';
 
-async function signUpNewUser(req, res) {
-    if (!isSignUpDataValid(req.body)) return res.sendStatus(400);
-
-    const { name, email } = req.body;
-    const password = bcrypt.hashSync(req.body.password, 10);
+async function signUp(req, res) {
+    const validationError = userService.signUpDataValidationError(req.body);
+    if (validationError) return res.status(400).send(validationError.message);
 
     try {
-        const result = await connection.query('SELECT * FROM users WHERE email = $1 LIMIT 1;', [email]);
-        if (result.rowCount !== 0) return res.sendStatus(409);
+        if (await userRepository.hasEmailConflict(req.body.email)) return res.sendStatus(409);
 
-        await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3);', [name, email, password]);
+        await userService.createUser(req.body);
 
         return res.sendStatus(201);
     } catch (error) {
@@ -53,6 +51,6 @@ async function signInUser(req, res) {
 }
 
 export {
-    signUpNewUser,
+    signUp,
     signInUser,
 };
