@@ -1,6 +1,6 @@
 import joi from 'joi';
 
-function isTransactionDataValid(object) {
+function transactionDataValidationError(object) {
     const transactionSchema = joi.object({
         description: joi.string().min(1).required(),
         value: joi.number().positive().precision(2).required(),
@@ -9,7 +9,15 @@ function isTransactionDataValid(object) {
 
     const { error } = transactionSchema.validate(object, { convert: false });
 
-    return !joi.isError(error);
+    return error;
 }
 
-export default isTransactionDataValid;
+function isTransactionTypeValid(type) {
+    const validTypes = ['outcome', 'income'];
+    return validTypes.includes(type);
+}
+
+export {
+    transactionDataValidationError,
+    isTransactionTypeValid,
+};
