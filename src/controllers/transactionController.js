@@ -1,21 +1,22 @@
-import dayjs from 'dayjs';
 import connection from '../database/database.js';
-import isTransactionDataValid from '../validation/newTransaction.js';
+import * as transactionService from '../services/transactionService.js';
+import * as transactionRepository from '../repositories/transactionRepository.js';
 
 async function createNewTransaction(req, res) {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    const { description, value, type } = req.body;
 
     if (!token) return res.sendStatus(401);
-    if (!isTransactionDataValid(req.body) || !(type === 'income' || type === 'outcome')) return res.sendStatus(422);
+
+    const validationError = transactionService.transactionDataValidationError(req.body);
+    if (validationError) return res.status(422).send(validationError.message);
+    if (!transactionService.isTransactionTypeValid(req.body.type)) return res.status(422).send('invalid transaction type');
 
     try {
-        const result = await connection.query('SELECT *, user_id as "userId" FROM sessions WHERE token = $1 LIMIT 1;', [token]);
-        const session = result.rows[0];
-
+        const session = await transactionRepository.searchSession(token);
         if (!session) return res.sendStatus(401);
 
-        await connection.query('INSERT INTO transactions (user_id, description, value, type, date) VALUES ($1, $2, $3, $4, $5);', [session.userId, description.trim(), value, type, dayjs()]);
+        await transactionRepository.createTransaction(session, req.body);
+
         return res.sendStatus(201);
     } catch (error) {
         console.error(error);
