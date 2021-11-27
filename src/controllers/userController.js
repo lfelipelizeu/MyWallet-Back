@@ -1,6 +1,3 @@
-import bcrypt from 'bcrypt';
-import { v4 as uuid } from 'uuid';
-import connection from '../database/database.js';
 import * as userService from '../services/userService.js';
 import * as userRepository from '../repositories/userRepository.js';
 
@@ -20,7 +17,7 @@ async function signUp(req, res) {
     }
 }
 
-async function signInUser(req, res) {
+async function signIn(req, res) {
     const { email, password } = req.body;
 
     if (!email || !password) return res.sendStatus(400);
@@ -48,5 +45,5 @@ async function signInUser(req, res) {
 
 export {
     signUp,
-    signInUser,
+    signIn,
 };

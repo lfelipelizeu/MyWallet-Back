@@ -9,7 +9,7 @@ app.use(express.json());
 
 app.post('/sign-up', userController.signUp);
 
-app.post('/sign-in', userController.signInUser);
+app.post('/sign-in', userController.signIn);
 
 app.post('/transactions', createNewTransaction);
 
