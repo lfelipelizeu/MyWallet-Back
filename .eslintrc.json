@@ -16,6 +16,11 @@
             "error", {
                 "js": "ignorePackages"
             }
+        ],
+        "import/no-extraneous-dependencies": [
+            "error", {
+                "devDependencies": true
+            }
         ]
     }
 }
