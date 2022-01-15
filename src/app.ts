@@ -1,7 +1,8 @@
+import './setup';
 import express from 'express';
 import cors from 'cors';
-import * as transactionController from './controllers/transactionController.js';
-import * as userController from './controllers/userController.js';
+import * as transactionController from './controllers/transactionController';
+import * as userController from './controllers/userController';
 
 const app = express();
 app.use(cors());

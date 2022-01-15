@@ -1,7 +1,8 @@
-import * as userService from '../services/userService.js';
-import * as userRepository from '../repositories/userRepository.js';
+import { Request, Response } from 'express';
+import * as userService from '../services/userService';
+import * as userRepository from '../repositories/userRepository';
 
-async function signUp(req, res) {
+async function signUp(req: Request, res: Response) {
     const validationError = userService.signUpDataValidationError(req.body);
     if (validationError) return res.status(400).send(validationError.message);
 
@@ -17,7 +18,7 @@ async function signUp(req, res) {
     }
 }
 
-async function signIn(req, res) {
+async function signIn(req: Request, res: Response) {
     const { email, password } = req.body;
 
     if (!email || !password) return res.sendStatus(400);

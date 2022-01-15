@@ -1,7 +1,8 @@
-import * as transactionService from '../services/transactionService.js';
-import * as transactionRepository from '../repositories/transactionRepository.js';
+import { Request, Response } from 'express';
+import * as transactionService from '../services/transactionService';
+import * as transactionRepository from '../repositories/transactionRepository';
 
-async function createNewTransaction(req, res) {
+async function createNewTransaction(req: Request, res: Response) {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) return res.sendStatus(401);
@@ -23,7 +24,7 @@ async function createNewTransaction(req, res) {
     }
 }
 
-async function listUserTransactions(req, res) {
+async function listUserTransactions(req: Request, res: Response) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.sendStatus(401);
 
