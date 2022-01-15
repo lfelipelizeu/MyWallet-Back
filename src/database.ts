@@ -1,6 +1,4 @@
-import pg from 'pg';
-
-const { Pool } = pg;
+import { Pool } from 'pg';
 
 const databaseConfig = process.env.NODE_ENV === 'production' ? ({
     connectionString: process.env.DATABASE_URL,

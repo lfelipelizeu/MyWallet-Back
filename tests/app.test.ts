@@ -1,12 +1,14 @@
-import '../src/setup.js';
+//import '../src/setup';
 import supertest from 'supertest';
 import bcrypt from 'bcrypt';
-import faker from 'faker';
 import { v4 as uuid } from 'uuid';
-import connection from '../src/database/database.js';
-import app from '../src/app.js';
-import createUser from './factories/userFactory.js';
-import createTransaction from './factories/transactionFactory.js';
+import connection from '../src/database';
+import faker from '@faker-js/faker';
+import app from '../src/app';
+import createUser from './factories/userFactory';
+import createTransaction from './factories/transactionFactory';
+
+const agent = supertest(app);
 
 describe('POST /signup', () => {
     const user = createUser();
@@ -29,21 +31,21 @@ describe('POST /signup', () => {
             repeatPassword: testUser.password,
         };
 
-        const result = await supertest(app).post('/sign-up').send(body);
+        const result = await agent.post('/sign-up').send(body);
         expect(result.status).toEqual(400);
     });
 
     it('returns 409 for email already registered', async () => {
         const body = user;
 
-        const result = await supertest(app).post('/sign-up').send(body);
+        const result = await agent.post('/sign-up').send(body);
         expect(result.status).toEqual(409);
     });
 
     it('returns 201 for valid data', async () => {
         const body = createUser();
 
-        const result = await supertest(app).post('/sign-up').send(body);
+        const result = await agent.post('/sign-up').send(body);
         expect(result.status).toEqual(201);
     });
 });
@@ -66,14 +68,14 @@ describe('POST /sign-in', () => {
             email: user.email,
         };
 
-        const result = await supertest(app).post('/sign-in').send(body);
+        const result = await agent.post('/sign-in').send(body);
         expect(result.status).toEqual(400);
     });
 
     it('returns 404 for not registered user', async () => {
         const body = createUser();
 
-        const result = await supertest(app).post('/sign-in').send(body);
+        const result = await agent.post('/sign-in').send(body);
         expect(result.status).toEqual(404);
     });
 
@@ -83,14 +85,14 @@ describe('POST /sign-in', () => {
             password: faker.internet.password(),
         };
 
-        const result = await supertest(app).post('/sign-in').send(body);
+        const result = await agent.post('/sign-in').send(body);
         expect(result.status).toEqual(401);
     });
 
     it('returns 200 for wrong password', async () => {
         const body = user;
 
-        const result = await supertest(app).post('/sign-in').send(body);
+        const result = await agent.post('/sign-in').send(body);
         expect(result.status).toEqual(200);
     });
 });
@@ -118,7 +120,7 @@ describe('POST /transactions', () => {
     it('returns 401 for no token received', async () => {
         const body = createTransaction();
 
-        const result = await supertest(app).post('/transactions').send(body);
+        const result = await agent.post('/transactions').send(body);
         expect(result.status).toEqual(401);
     });
 
@@ -128,24 +130,23 @@ describe('POST /transactions', () => {
         const body = {
             description: newTransaction.description,
             type: newTransaction.type,
-            date: newTransaction.date,
         };
 
-        const result = await supertest(app).post('/transactions').send(body).set('authorization', session.token);
+        const result = await agent.post('/transactions').send(body).set('authorization', session.token);
         expect(result.status).toEqual(422);
     });
 
     it('returns 401 for invalid session', async () => {
         const body = createTransaction();
 
-        const result = await supertest(app).post('/transactions').send(body).set('authorization', faker.datatype.uuid());
+        const result = await agent.post('/transactions').send(body).set('authorization', faker.datatype.uuid());
         expect(result.status).toEqual(401);
     });
 
     it('returns 201 for valid data', async () => {
         const body = createTransaction();
 
-        const result = await supertest(app).post('/transactions').send(body).set('authorization', session.token);
+        const result = await agent.post('/transactions').send(body).set('authorization', session.token);
         expect(result.status).toEqual(201);
     });
 });
@@ -170,17 +171,17 @@ describe('GET /transactions', () => {
     });
 
     it('returns 401 for no token received', async () => {
-        const result = await supertest(app).get('/transactions');
+        const result = await agent.get('/transactions');
         expect(result.status).toEqual(401);
     });
 
     it('returns 401 for invalid session', async () => {
-        const result = await supertest(app).get('/transactions').set('authorization', faker.datatype.uuid());
+        const result = await agent.get('/transactions').set('authorization', faker.datatype.uuid());
         expect(result.status).toEqual(401);
     });
 
     it('returns 200 for a valid session', async () => {
-        const result = await supertest(app).get('/transactions').set('authorization', session.token);
+        const result = await agent.get('/transactions').set('authorization', session.token);
         expect(result.status).toEqual(200);
     });
 });
