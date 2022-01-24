@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import * as sessionService from '../services/sessionService';
 import * as transactionService from '../services/transactionService';
-import * as transactionRepository from '../repositories/transactionRepository';
 
 async function createNewTransaction(req: Request, res: Response) {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -12,10 +12,10 @@ async function createNewTransaction(req: Request, res: Response) {
     if (!transactionService.isTransactionTypeValid(req.body.type)) return res.status(422).send('invalid transaction type');
 
     try {
-        const session = await transactionRepository.searchSession(token);
+        const session = await sessionService.findSession(token);
         if (!session) return res.sendStatus(401);
 
-        await transactionRepository.createTransaction(session, req.body);
+        await transactionService.createTransaction(session.user.id, req.body);
 
         return res.sendStatus(201);
     } catch (error) {
@@ -29,10 +29,10 @@ async function listUserTransactions(req: Request, res: Response) {
     if (!token) return res.sendStatus(401);
 
     try {
-        const session = await transactionRepository.searchSession(token);
+        const session = await sessionService.findSession(token);
         if (!session) return res.sendStatus(401);
 
-        const transactions = await transactionRepository.searchTransactions(session.user_id);
+        const transactions = await transactionService.listTransactions(session.user.id);
 
         return res.status(200).send(transactions);
     } catch (error) {

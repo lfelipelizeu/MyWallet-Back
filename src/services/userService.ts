@@ -1,7 +1,13 @@
 import joi from 'joi';
+import { getRepository } from 'typeorm';
 import bcrypt from 'bcrypt';
-import { v4 as uuid } from 'uuid';
-import * as userRepository from '../repositories/userRepository';
+import UserEntity from '../entities/UserEntity';
+
+interface NewUser {
+    name: string;
+    email: string;
+    password: string;
+}
 
 function signUpDataValidationError(object: Object) {
     const signUpSchema = joi.object({
@@ -16,26 +22,36 @@ function signUpDataValidationError(object: Object) {
     return error;
 }
 
-async function createUser(body: any) {
-    const hashPassword = bcrypt.hashSync(body.password, 10);
-    // eslint-disable-next-line no-param-reassign
-    body.password = hashPassword;
-    await userRepository.insertUser(body);
+async function createUser(body: NewUser): Promise<void> {
+    const { name, email, password } = body;
+    const hashPassword = bcrypt.hashSync(password, 10);
+
+    const user = getRepository(UserEntity).create({
+        name,
+        email,
+        password: hashPassword,
+    });
+
+    if (!user) throw new Error('Usuário já cadastrado!');
+
+    await getRepository(UserEntity).save(user);
+}
+
+async function findEmail(email: string): Promise<UserEntity> {
+    const user = await getRepository(UserEntity).findOne({ email });
+
+    if (!user) throw new Error('Usuário não encontrado!');
+
+    return user;
 }
 
 function isPasswordValid(passwordSent: string, userPassword: string) {
     return (bcrypt.compareSync(passwordSent, userPassword));
 }
 
-async function createNewSession(userId: number) {
-    const token = uuid();
-    await userRepository.insertSession(userId, token);
-    return token;
-}
-
 export {
     signUpDataValidationError,
     createUser,
+    findEmail,
     isPasswordValid,
-    createNewSession,
 };
