@@ -4,7 +4,7 @@ import {
 } from 'typeorm';
 import UserEntity from './UserEntity';
 
-@Entity('transactions')
+@Entity('sessions')
 export default class SessionEntity {
     @PrimaryGeneratedColumn()
     id: number;
