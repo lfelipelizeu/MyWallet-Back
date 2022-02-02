@@ -7,6 +7,10 @@ async function signUp(req: Request, res: Response) {
     if (validationError) return res.status(400).send(validationError.message);
 
     try {
+        const user = await userService.findEmail(req.body.email);
+
+        if (user) return res.sendStatus(409);
+
         await userService.createUser(req.body);
 
         return res.sendStatus(201);
@@ -24,6 +28,7 @@ async function signIn(req: Request, res: Response) {
     try {
         const user = await userService.findEmail(email);
 
+        if (!user) return res.sendStatus(404);
         if (!userService.isPasswordValid(password, user.password)) return res.sendStatus(401);
 
         const token = await sessionService.createNewSession(user.id);
@@ -33,7 +38,7 @@ async function signIn(req: Request, res: Response) {
             token,
         });
     } catch (error) {
-        console.error(error.message);
+        console.error(error);
         return res.sendStatus(500);
     }
 }

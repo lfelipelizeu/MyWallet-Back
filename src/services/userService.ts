@@ -32,16 +32,11 @@ async function createUser(body: NewUser): Promise<void> {
         password: hashPassword,
     });
 
-    if (!user) throw new Error('Usuário já cadastrado!');
-
     await getRepository(UserEntity).save(user);
 }
 
 async function findEmail(email: string): Promise<UserEntity> {
     const user = await getRepository(UserEntity).findOne({ email });
-
-    if (!user) throw new Error('Usuário não encontrado!');
-
     return user;
 }
 
